@@ -1,5 +1,6 @@
 package com.jian.server;
 
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -24,8 +25,8 @@ public class MainServer {
 
 
     public static void main(String[] args) throws InterruptedException {
+       startServer("", 1000);
 
-        startServer("", 1000);
 
     }
 
@@ -51,6 +52,8 @@ public class MainServer {
         boss.shutdownGracefully();
         worker.shutdownGracefully();
     }
+
+
 
 
 }

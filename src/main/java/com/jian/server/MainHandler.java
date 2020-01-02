@@ -23,8 +23,11 @@ import java.util.HashMap;
 public class MainHandler  extends ChannelInboundHandlerAdapter {
 
     private  static final Logger  logger = LoggerFactory.getLogger(MainHandler.class);
-
+    private static final  HashMap<String ,ChannelHandlerContext>  idCtxMap = new HashMap<>();
     private static final   HashMap<String , Integer>  IdMap = new HashMap<>();
+    private static final   HashMap<Integer , ChannelHandlerContext>  pidCtxMap = new HashMap<>();
+
+
 
 
     @Override
@@ -37,7 +40,7 @@ public class MainHandler  extends ChannelInboundHandlerAdapter {
         reslutUtil.setCode(CmdCodeUtil.CID);
         reslutUtil.setData(IdMap.get(chanelId));
         ctx.channel().writeAndFlush(reslutUtil);
-        ctx.channel().flush();
+
     }
 
     @Override
@@ -47,23 +50,44 @@ public class MainHandler  extends ChannelInboundHandlerAdapter {
         int id = IdMap.size();
         id++;
         IdMap.put(chanelId,id );
+        idCtxMap.put(chanelId, ctx);
+        pidCtxMap.put(id, ctx);
     }
 
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        logger.info("接收到客户端发来的消息：{} ，通道ID:{}", msg , ctx.channel().id());
-        ctx.channel().writeAndFlush(msg);
-        ctx.channel().flush();
+        String clienid = ctx.channel().id().asShortText();
+        logger.info("接收到客户端发来的消息：{} ，通道ID:{}", msg , clienid);
+
+        if(msg instanceof  ReslutUtil){
+            ReslutUtil reslutUtil = (ReslutUtil) msg;
+          ChannelHandlerContext context =pidCtxMap.get(Integer.valueOf(reslutUtil.getCmd()));
+
+          if(context != null && reslutUtil.getCode() == CmdCodeUtil.SEND_PRIVATE_OBJ ){
+              context.channel().writeAndFlush(IdMap.get(clienid) + "给您的一条私信：\n" +reslutUtil.getData());
+              ctx.channel().writeAndFlush(IdMap.get(clienid)+"给"+reslutUtil.getCmd()+"号，发送了一条私信：\n" +reslutUtil.getData());
+          }else{
+              ctx.channel().writeAndFlush("对象ID不在线");
+          }
+
+        }
+        if(msg instanceof String){
+            for(ChannelHandlerContext context : idCtxMap.values()){
+                context.channel().writeAndFlush(IdMap.get(clienid) + ":\n "+msg);
+            }
+
+        }
     }
 
 
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+      String chanelId = ctx.channel().id().asShortText();
+       logger.info("客户端关闭，通道ID：{}", chanelId);
 
-       logger.info("客户端关闭，通道ID：{}", ctx.channel().id());
-       if(IdMap.containsKey(ctx.channel().id()))
+       if(IdMap.containsKey(chanelId))
            IdMap.remove(ctx.channel().id());
        ctx.close();
 
