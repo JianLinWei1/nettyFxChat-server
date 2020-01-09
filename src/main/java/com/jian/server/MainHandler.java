@@ -67,6 +67,9 @@ public class MainHandler  extends ChannelInboundHandlerAdapter {
           if(context != null && reslutUtil.getCode() == CmdCodeUtil.SEND_PRIVATE_OBJ ){
               context.channel().writeAndFlush(IdMap.get(clienid) + "给您的一条私信：\n" +reslutUtil.getData());
               ctx.channel().writeAndFlush(IdMap.get(clienid)+"给"+reslutUtil.getCmd()+"号，发送了一条私信：\n" +reslutUtil.getData());
+          }else if(reslutUtil.getCode() == CmdCodeUtil.VIDEO_MSG){
+              context.channel().writeAndFlush(reslutUtil.getData());
+
           }else{
               ctx.channel().writeAndFlush("对象ID不在线");
           }
@@ -79,6 +82,8 @@ public class MainHandler  extends ChannelInboundHandlerAdapter {
 
         }
     }
+
+
 
 
 
